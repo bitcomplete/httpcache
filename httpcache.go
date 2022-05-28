@@ -39,8 +39,10 @@ type Cache interface {
 	Delete(ctx context.Context, key string)
 }
 
-// cacheKey returns the cache key for req.
-func cacheKey(req *http.Request) string {
+type KeyFunc func(req *http.Request) string
+
+// DefaultKeyFunc returns the cache key for req
+var DefaultKeyFunc = func(req *http.Request) string {
 	if req.Method == http.MethodGet {
 		return req.URL.String()
 	} else {
@@ -50,8 +52,8 @@ func cacheKey(req *http.Request) string {
 
 // CachedResponse returns the cached http.Response for req if present, and nil
 // otherwise.
-func CachedResponse(ctx context.Context, c Cache, req *http.Request) (resp *http.Response, err error) {
-	cachedVal, ok := c.Get(ctx, cacheKey(req))
+func CachedResponse(ctx context.Context, c Cache, key string, req *http.Request) (resp *http.Response, err error) {
+	cachedVal, ok := c.Get(ctx, key)
 	if !ok {
 		return
 	}
@@ -94,6 +96,23 @@ func NewMemoryCache() *MemoryCache {
 	return c
 }
 
+// TransportOpt is a configuration option for creating a new Transport
+type TransportOpt func(t *Transport)
+
+// MarkCachedResponsesOpt configures a transport by setting MarkCachedResponses to true
+func MarkCachedResponsesOpt(markCachedResponses bool) TransportOpt {
+	return func(t *Transport) {
+		t.MarkCachedResponses = markCachedResponses
+	}
+}
+
+// KeyFuncOpt configures a transport by setting its KeyFunc to the one given
+func KeyFuncOpt(keyFunc KeyFunc) TransportOpt {
+	return func(t *Transport) {
+		t.KeyFunc = keyFunc
+	}
+}
+
 // Transport is an implementation of http.RoundTripper that will return values from a cache
 // where possible (avoiding a network request) and will additionally add validators (etag/if-modified-since)
 // to repeated requests allowing servers to return 304 / Not Modified
@@ -104,12 +123,22 @@ type Transport struct {
 	Cache     Cache
 	// If true, responses returned from the cache will be given an extra header, X-From-Cache
 	MarkCachedResponses bool
+	// A function to generate a cache key for the given request
+	KeyFunc KeyFunc
 }
 
-// NewTransport returns a new Transport with the
-// provided Cache implementation and MarkCachedResponses set to true
-func NewTransport(c Cache) *Transport {
-	return &Transport{Cache: c, MarkCachedResponses: true}
+// NewTransport returns a new Transport with the provided Cache and options. If
+// KeyFunc is not specified in opts then DefaultKeyFunc is used.
+func NewTransport(c Cache, opts ...TransportOpt) *Transport {
+	t := &Transport{
+		Cache:               c,
+		KeyFunc:             DefaultKeyFunc,
+		MarkCachedResponses: true,
+	}
+	for _, opt := range opts {
+		opt(t)
+	}
+	return t
 }
 
 // Client returns an *http.Client that caches responses.
@@ -138,11 +167,11 @@ func varyMatches(cachedResp *http.Response, req *http.Request) bool {
 // to give the server a chance to respond with NotModified. If this happens, then the cached Response
 // will be returned.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	cacheKey := cacheKey(req)
+	cacheKey := t.KeyFunc(req)
 	cacheable := (req.Method == "GET" || req.Method == "HEAD") && req.Header.Get("range") == ""
 	var cachedResp *http.Response
 	if cacheable {
-		cachedResp, err = CachedResponse(req.Context(), t.Cache, req)
+		cachedResp, err = CachedResponse(req.Context(), t.Cache, cacheKey, req)
 	} else {
 		// Need to invalidate an existing value
 		t.Cache.Delete(req.Context(), cacheKey)
@@ -548,8 +577,8 @@ func (r *cachingReadCloser) Close() error {
 }
 
 // NewMemoryCacheTransport returns a new Transport using the in-memory cache implementation
-func NewMemoryCacheTransport() *Transport {
+func NewMemoryCacheTransport(opts ...TransportOpt) *Transport {
 	c := NewMemoryCache()
-	t := NewTransport(c)
+	t := NewTransport(c, opts...)
 	return t
 }
