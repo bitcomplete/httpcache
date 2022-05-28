@@ -3,6 +3,8 @@
 package leveldbcache
 
 import (
+	"context"
+
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -12,7 +14,7 @@ type Cache struct {
 }
 
 // Get returns the response corresponding to key if present
-func (c *Cache) Get(key string) (resp []byte, ok bool) {
+func (c *Cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 	var err error
 	resp, err = c.db.Get([]byte(key), nil)
 	if err != nil {
@@ -22,12 +24,12 @@ func (c *Cache) Get(key string) (resp []byte, ok bool) {
 }
 
 // Set saves a response to the cache as key
-func (c *Cache) Set(key string, resp []byte) {
+func (c *Cache) Set(ctx context.Context, key string, resp []byte) {
 	c.db.Put([]byte(key), resp, nil)
 }
 
 // Delete removes the response with key from the cache
-func (c *Cache) Delete(key string) {
+func (c *Cache) Delete(ctx context.Context, key string) {
 	c.db.Delete([]byte(key), nil)
 }
 

@@ -1,3 +1,4 @@
+//go:build !appengine
 // +build !appengine
 
 // Package memcache provides an implementation of httpcache.Cache that uses
@@ -9,6 +10,8 @@
 package memcache
 
 import (
+	"context"
+
 	"github.com/bradfitz/gomemcache/memcache"
 )
 
@@ -25,7 +28,7 @@ func cacheKey(key string) string {
 }
 
 // Get returns the response corresponding to key if present.
-func (c *Cache) Get(key string) (resp []byte, ok bool) {
+func (c *Cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 	item, err := c.Client.Get(cacheKey(key))
 	if err != nil {
 		return nil, false
@@ -34,7 +37,7 @@ func (c *Cache) Get(key string) (resp []byte, ok bool) {
 }
 
 // Set saves a response to the cache as key.
-func (c *Cache) Set(key string, resp []byte) {
+func (c *Cache) Set(ctx context.Context, key string, resp []byte) {
 	item := &memcache.Item{
 		Key:   cacheKey(key),
 		Value: resp,
@@ -43,7 +46,7 @@ func (c *Cache) Set(key string, resp []byte) {
 }
 
 // Delete removes the response with key from the cache.
-func (c *Cache) Delete(key string) {
+func (c *Cache) Delete(ctx context.Context, key string) {
 	c.Client.Delete(cacheKey(key))
 }
 

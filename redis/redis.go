@@ -2,8 +2,10 @@
 package redis
 
 import (
+	"context"
+
+	"github.com/bitcomplete/httpcache"
 	"github.com/gomodule/redigo/redis"
-	"github.com/gregjones/httpcache"
 )
 
 // cache is an implementation of httpcache.Cache that caches responses in a
@@ -19,7 +21,7 @@ func cacheKey(key string) string {
 }
 
 // Get returns the response corresponding to key if present.
-func (c cache) Get(key string) (resp []byte, ok bool) {
+func (c cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 	item, err := redis.Bytes(c.Do("GET", cacheKey(key)))
 	if err != nil {
 		return nil, false
@@ -28,12 +30,12 @@ func (c cache) Get(key string) (resp []byte, ok bool) {
 }
 
 // Set saves a response to the cache as key.
-func (c cache) Set(key string, resp []byte) {
+func (c cache) Set(ctx context.Context, key string, resp []byte) {
 	c.Do("SET", cacheKey(key), resp)
 }
 
 // Delete removes the response with key from the cache.
-func (c cache) Delete(key string) {
+func (c cache) Delete(ctx context.Context, key string) {
 	c.Do("DEL", cacheKey(key))
 }
 

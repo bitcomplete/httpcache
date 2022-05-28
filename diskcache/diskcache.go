@@ -5,10 +5,12 @@ package diskcache
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/peterbourgon/diskv"
 	"io"
+
+	"github.com/peterbourgon/diskv"
 )
 
 // Cache is an implementation of httpcache.Cache that supplements the in-memory map with persistent storage
@@ -17,7 +19,7 @@ type Cache struct {
 }
 
 // Get returns the response corresponding to key if present
-func (c *Cache) Get(key string) (resp []byte, ok bool) {
+func (c *Cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 	key = keyToFilename(key)
 	resp, err := c.d.Read(key)
 	if err != nil {
@@ -27,13 +29,13 @@ func (c *Cache) Get(key string) (resp []byte, ok bool) {
 }
 
 // Set saves a response to the cache as key
-func (c *Cache) Set(key string, resp []byte) {
+func (c *Cache) Set(ctx context.Context, key string, resp []byte) {
 	key = keyToFilename(key)
 	c.d.WriteStream(key, bytes.NewReader(resp), true)
 }
 
 // Delete removes the response with key from the cache
-func (c *Cache) Delete(key string) {
+func (c *Cache) Delete(ctx context.Context, key string) {
 	key = keyToFilename(key)
 	c.d.Erase(key)
 }
