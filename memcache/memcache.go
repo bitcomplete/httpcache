@@ -42,12 +42,12 @@ func (c *Cache) Set(ctx context.Context, key string, resp []byte) {
 		Key:   cacheKey(key),
 		Value: resp,
 	}
-	c.Client.Set(item)
+	_ = c.Client.Set(item)
 }
 
 // Delete removes the response with key from the cache.
 func (c *Cache) Delete(ctx context.Context, key string) {
-	c.Client.Delete(cacheKey(key))
+	_ = c.Client.Delete(cacheKey(key))
 }
 
 // New returns a new Cache using the provided memcache server(s) with equal

@@ -31,18 +31,18 @@ func (c *Cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 // Set saves a response to the cache as key
 func (c *Cache) Set(ctx context.Context, key string, resp []byte) {
 	key = keyToFilename(key)
-	c.d.WriteStream(key, bytes.NewReader(resp), true)
+	_ = c.d.WriteStream(key, bytes.NewReader(resp), true)
 }
 
 // Delete removes the response with key from the cache
 func (c *Cache) Delete(ctx context.Context, key string) {
 	key = keyToFilename(key)
-	c.d.Erase(key)
+	_ = c.d.Erase(key)
 }
 
 func keyToFilename(key string) string {
 	h := md5.New()
-	io.WriteString(h, key)
+	_, _ = io.WriteString(h, key)
 	return hex.EncodeToString(h.Sum(nil))
 }
 

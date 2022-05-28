@@ -31,12 +31,12 @@ func (c cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 
 // Set saves a response to the cache as key.
 func (c cache) Set(ctx context.Context, key string, resp []byte) {
-	c.Do("SET", cacheKey(key), resp)
+	_, _ = c.Do("SET", cacheKey(key), resp)
 }
 
 // Delete removes the response with key from the cache.
 func (c cache) Delete(ctx context.Context, key string) {
-	c.Do("DEL", cacheKey(key))
+	_, _ = c.Do("DEL", cacheKey(key))
 }
 
 // NewWithClient returns a new Cache with the given redis connection.

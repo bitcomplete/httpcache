@@ -53,7 +53,7 @@ func setup() {
 
 	mux.HandleFunc("/method", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=3600")
-		w.Write([]byte(r.Method))
+		_, _ = w.Write([]byte(r.Method))
 	}))
 
 	mux.HandleFunc("/range", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -65,10 +65,10 @@ func setup() {
 		w.Header().Set("last-modified", lm)
 		if r.Header.Get("range") == "bytes=4-9" {
 			w.WriteHeader(http.StatusPartialContent)
-			w.Write([]byte(" text "))
+			_, _ = w.Write([]byte(" text "))
 			return
 		}
-		w.Write([]byte("Some text content"))
+		_, _ = w.Write([]byte("Some text content"))
 	}))
 
 	mux.HandleFunc("/nostore", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -97,27 +97,27 @@ func setup() {
 		w.Header().Set("Cache-Control", "max-age=3600")
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Vary", "Accept")
-		w.Write([]byte("Some text content"))
+		_, _ = w.Write([]byte("Some text content"))
 	}))
 
 	mux.HandleFunc("/doublevary", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=3600")
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Vary", "Accept, Accept-Language")
-		w.Write([]byte("Some text content"))
+		_, _ = w.Write([]byte("Some text content"))
 	}))
 	mux.HandleFunc("/2varyheaders", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=3600")
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Add("Vary", "Accept")
 		w.Header().Add("Vary", "Accept-Language")
-		w.Write([]byte("Some text content"))
+		_, _ = w.Write([]byte("Some text content"))
 	}))
 	mux.HandleFunc("/varyunused", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=3600")
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Vary", "X-Madeup-Header")
-		w.Write([]byte("Some text content"))
+		_, _ = w.Write([]byte("Some text content"))
 	}))
 
 	mux.HandleFunc("/cachederror", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +128,7 @@ func setup() {
 		}
 		w.Header().Set("etag", etag)
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Not found"))
+		_, _ = w.Write([]byte("Not found"))
 	}))
 
 	updateFieldsCounter := 0
@@ -140,7 +140,7 @@ func setup() {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
-		w.Write([]byte("Some text content"))
+		_, _ = w.Write([]byte("Some text content"))
 	}))
 
 	// Take 3 seconds to return 200 OK (for testing client timeouts).
@@ -154,7 +154,7 @@ func setup() {
 			case <-s.done:
 				return
 			default:
-				w.Write([]byte{0})
+				_, _ = w.Write([]byte{0})
 			}
 		}
 	}))
@@ -899,7 +899,7 @@ func TestCachedErrorsKeepStatus(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer resp.Body.Close()
-		io.Copy(ioutil.Discard, resp.Body)
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
 	}
 	{
 		resp, err := s.client.Do(req)

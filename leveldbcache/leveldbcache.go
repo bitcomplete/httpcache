@@ -25,12 +25,12 @@ func (c *Cache) Get(ctx context.Context, key string) (resp []byte, ok bool) {
 
 // Set saves a response to the cache as key
 func (c *Cache) Set(ctx context.Context, key string, resp []byte) {
-	c.db.Put([]byte(key), resp, nil)
+	_ = c.db.Put([]byte(key), resp, nil)
 }
 
 // Delete removes the response with key from the cache
 func (c *Cache) Delete(ctx context.Context, key string) {
-	c.db.Delete([]byte(key), nil)
+	_ = c.db.Delete([]byte(key), nil)
 }
 
 // New returns a new Cache that will store leveldb in path
