@@ -44,8 +44,8 @@ func (c cache) Delete(ctx context.Context, key string) {
 // Opt is a configuration option for creating a new Redis cache
 type Opt func(*cache)
 
-// WithExpiration configures a Redis cache by setting its expiration
-func WithExpiration(expiration time.Duration) Opt {
+// ExpirationOpt configures a Redis cache by setting its expiration
+func ExpirationOpt(expiration time.Duration) Opt {
 	return func(c *cache) {
 		c.expiration = expiration
 	}
